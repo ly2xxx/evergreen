@@ -1,0 +1,37 @@
+# Example Dockerfile that demonstrates various patterns
+# that evergreen-python can detect and update
+
+# Standard FROM with tag
+FROM node:18-alpine AS builder
+
+# FROM with digest pinning
+FROM nginx:1.21@sha256:10d1f5b58f74683ad34eb29287e07dab1e90f10af243f151bb50aa5dbb4d62ee
+
+# Multi-stage build reference
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# External image reference
+COPY --from=redis:7-alpine /usr/local/bin/redis-cli /usr/local/bin/
+
+# RUN with mount from external image
+RUN --mount=from=golang:1.19-alpine,source=/usr/local/go,target=/usr/local/go \
+    go build -o app .
+
+# Variable usage (will be skipped but detected)
+ARG BASE_IMAGE=python:3.11
+FROM ${BASE_IMAGE:-python:3.11-slim}
+
+# Registry with port
+FROM quay.io:443/prometheus/prometheus:v2.37.0
+
+# Custom registry
+FROM registry.example.com/internal/base:latest
+
+# Library image (Docker Hub official)
+FROM alpine:3.16
+
+WORKDIR /app
+COPY . .
+RUN npm install
+EXPOSE 3000
+CMD ["npm", "start"]

@@ -1,0 +1,25 @@
+{
+  "enabledManagers": ["docker"],
+  "access_token": "glpat-xxx",
+  "gitlab_url": "https://gitlab.example.com",
+  "repositories": [
+    "group/project1",
+    "group/project2"
+  ],
+  "schedule": "0 2 * * MON",
+  "automerge": false,
+  "createMRs": true,
+  "labels": ["dependencies", "docker"],
+  "assignees": [],
+  "registryUrls": [
+    "https://index.docker.io"
+  ],
+  "hostRules": [
+    {
+      "hostType": "docker",
+      "matchHost": "index.docker.io",
+      "username": "",
+      "password": ""
+    }
+  ]
+}

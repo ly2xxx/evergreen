@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  evergreen-python:
+    build: .
+    container_name: evergreen-python
+    environment:
+      - LOG_LEVEL=INFO
+      - CACHE_DIR=/app/cache
+      # Override with your values or use .env file
+      - GITLAB_ACCESS_TOKEN=${GITLAB_ACCESS_TOKEN}
+      - GITLAB_URL=${GITLAB_URL}
+      - REPOSITORIES=${REPOSITORIES}
+      - LABELS=dependencies,docker
+    volumes:
+      - ./config:/app/config:ro
+      - evergreen-cache:/app/cache
+    command: ["python", "src/main.py", "--config", "config/renovate.json"]
+
+volumes:
+  evergreen-cache:

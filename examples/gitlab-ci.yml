@@ -1,0 +1,60 @@
+# Example GitLab CI configuration for running evergreen-python
+
+# Run evergreen-python on a schedule
+evergreen-scan:
+  image: evergreen-python:latest
+  stage: maintain
+  script:
+    - python src/main.py
+  variables:
+    # Use GitLab variables for configuration
+    GITLAB_ACCESS_TOKEN: $EVERGREEN_GITLAB_TOKEN
+    GITLAB_URL: $CI_SERVER_URL
+    REPOSITORIES: "group/project1,group/project2,group/project3"
+    LABELS: "dependencies,docker,automated"
+    LOG_LEVEL: "INFO"
+    CACHE_DIR: "/tmp/evergreen-cache"
+  rules:
+    # Run on scheduled pipelines
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    # Or run manually
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  # Optional: Run in parallel for different repository groups
+  parallel:
+    matrix:
+      - REPO_GROUP: "frontend"
+        REPOSITORIES: "frontend/web-app,frontend/admin-panel"
+      - REPO_GROUP: "backend"
+        REPOSITORIES: "backend/api,backend/worker"
+      - REPO_GROUP: "infrastructure"
+        REPOSITORIES: "infra/monitoring,infra/logging"
+
+# Alternative: Build and run in the same job
+evergreen-build-and-run:
+  image: docker:latest
+  services:
+    - docker:dind
+  stage: maintain
+  before_script:
+    - docker build -t evergreen-python .
+  script:
+    - docker run --rm
+        -e GITLAB_ACCESS_TOKEN=$EVERGREEN_GITLAB_TOKEN
+        -e GITLAB_URL=$CI_SERVER_URL
+        -e REPOSITORIES="group/project1,group/project2"
+        -e LOG_LEVEL=INFO
+        evergreen-python
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+# Dry run version for testing
+evergreen-dry-run:
+  extends: evergreen-scan
+  script:
+    - python src/main.py --dry-run
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true

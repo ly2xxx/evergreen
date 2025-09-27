@@ -1,0 +1,103 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: evergreen-python
+  namespace: default
+  labels:
+    app: evergreen-python
+    component: dependency-updater
+spec:
+  # Run every Monday at 2 AM
+  schedule: "0 2 * * 1"
+
+  # Keep last 3 jobs for debugging
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+
+  jobTemplate:
+    metadata:
+      labels:
+        app: evergreen-python
+    spec:
+      template:
+        metadata:
+          labels:
+            app: evergreen-python
+        spec:
+          restartPolicy: OnFailure
+
+          containers:
+          - name: evergreen
+            image: evergreen-python:latest
+            imagePullPolicy: Always
+
+            command: ["python", "src/main.py"]
+
+            env:
+            - name: GITLAB_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: evergreen-secrets
+                  key: gitlab-token
+            - name: GITLAB_URL
+              value: "https://gitlab.example.com"
+            - name: REPOSITORIES
+              value: "group/project1,group/project2"
+            - name: LABELS
+              value: "dependencies,docker,automated"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: CACHE_DIR
+              value: "/app/cache"
+
+            volumeMounts:
+            - name: cache-volume
+              mountPath: /app/cache
+            - name: config-volume
+              mountPath: /app/config
+              readOnly: true
+
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+
+          volumes:
+          - name: cache-volume
+            emptyDir: {}
+          - name: config-volume
+            configMap:
+              name: evergreen-config
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: evergreen-secrets
+  namespace: default
+type: Opaque
+stringData:
+  gitlab-token: "glpat-your-gitlab-token-here"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: evergreen-config
+  namespace: default
+data:
+  renovate.json: |
+    {
+      "enabledManagers": ["docker"],
+      "access_token": "$GITLAB_ACCESS_TOKEN",
+      "gitlab_url": "https://gitlab.example.com",
+      "repositories": [
+        "group/project1",
+        "group/project2"
+      ],
+      "labels": ["dependencies", "docker", "automated"],
+      "registryUrls": ["https://index.docker.io"]
+    }

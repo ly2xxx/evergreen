@@ -1,0 +1,8 @@
+{
+  "enabledManagers": ["docker"],
+  "access_token": "glpat-your-gitlab-token",
+  "gitlab_url": "https://gitlab.example.com",
+  "repositories": [
+    "group/project"
+  ]
+}

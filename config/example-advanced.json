@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "description": "Advanced configuration example for evergreen-python",
+
+  "enabledManagers": ["docker"],
+  "access_token": "glpat-your-gitlab-personal-access-token",
+  "gitlab_url": "https://gitlab.example.com",
+
+  "repositories": [
+    "devops/web-frontend",
+    "devops/api-backend",
+    "devops/worker-service",
+    "infrastructure/monitoring"
+  ],
+
+  "schedule": "0 2 * * MON",
+  "automerge": false,
+  "createMRs": true,
+
+  "labels": [
+    "dependencies",
+    "docker",
+    "automated",
+    "evergreen"
+  ],
+
+  "assignees": [
+    "devops-team",
+    "platform-engineer"
+  ],
+
+  "registryUrls": [
+    "https://index.docker.io",
+    "https://registry.gitlab.com",
+    "https://quay.io"
+  ],
+
+  "hostRules": [
+    {
+      "hostType": "docker",
+      "matchHost": "index.docker.io",
+      "username": "",
+      "password": ""
+    },
+    {
+      "hostType": "docker",
+      "matchHost": "registry.gitlab.com",
+      "username": "gitlab-ci-token",
+      "password": "$CI_JOB_TOKEN"
+    },
+    {
+      "hostType": "docker",
+      "matchHost": "quay.io",
+      "username": "$QUAY_USERNAME",
+      "password": "$QUAY_PASSWORD"
+    },
+    {
+      "hostType": "docker",
+      "matchHost": "private-registry.company.com",
+      "username": "$PRIVATE_REGISTRY_USER",
+      "password": "$PRIVATE_REGISTRY_TOKEN"
+    }
+  ]
+}
