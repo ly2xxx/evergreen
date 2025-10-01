@@ -277,3 +277,9 @@ This project is licensed under the MIT License. See LICENSE file for details.
 - 🐛 **Issues**: Report bugs via GitLab issues
 - 💡 **Feature Requests**: Suggest improvements via GitLab issues
 - 🔧 **Support**: Check logs with `LOG_LEVEL=DEBUG` for troubleshooting
+
+## Personal Access Token
+  1. Go to http://host.docker.internal/-/user_settings/personal_access_tokens
+  2. Create token with scopes: api, read_repository, write_repository
+  3. Copy the glpat- prefixed token
+![1759359259063](image/README/1759359259063.png)
