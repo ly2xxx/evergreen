@@ -1,0 +1,77 @@
+image: python:3.9
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+stages:
+  - build
+  - test
+  - deploy
+
+# Install dependencies
+install_dependencies:
+  stage: build
+  script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+  artifacts:
+    paths:
+      - venv/
+    expire_in: 1 hour
+
+# Run in dry-run mode (same as launch.json)
+test_dry_run:
+  stage: test
+  dependencies:
+    - install_dependencies
+  script:
+    - source venv/bin/activate
+    - python src/main.py --config config/local.json --dry-run
+  artifacts:
+    reports:
+      junit: test-results.xml
+    paths:
+      - logs/
+    when: always
+    expire_in: 1 week
+
+# Run actual scan (creates merge requests)
+run_scan:
+  stage: deploy
+  dependencies:
+    - install_dependencies
+  script:
+    - source venv/bin/activate
+    - python src/main.py --config config/local.json
+  when: manual
+  only:
+    - main
+    - master
+  artifacts:
+    paths:
+      - logs/
+    when: always
+    expire_in: 1 week
+
+# Scheduled job (runs on schedule defined in config)
+scheduled_scan:
+  stage: deploy
+  dependencies:
+    - install_dependencies
+  script:
+    - source venv/bin/activate
+    - python src/main.py --config config/local.json
+  only:
+    - schedules
+  artifacts:
+    paths:
+      - logs/
+    when: always
+    expire_in: 1 week
